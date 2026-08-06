@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import plotly.graph_objects as go
+import requests
 
 # Configurazione della pagina
 st.set_page_config(
@@ -23,34 +24,64 @@ DEFAULT_WATCHLIST = [
 if "user_watchlist" not in st.session_state:
     st.session_state.user_watchlist = DEFAULT_WATCHLIST
 
+# --- FUNZIONE PER TROVARE IL TICKER TRAMITE ISIN ---
+def find_ticker_by_isin(isin):
+    try:
+        url = "https://query1.finance.yahoo.com/v1/finance/search"
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        params = {'q': isin, 'quotesCount': 1, 'newsCount': 0}
+        resp = requests.get(url, headers=headers, params=params, timeout=5)
+        data = resp.json()
+        if 'quotes' in data and len(data['quotes']) > 0:
+            quote = data['quotes'][0]
+            return quote.get('symbol'), quote.get('shortname') or quote.get('longname')
+    except Exception:
+        pass
+    return None, None
+
 # --- 2. BARRA LATERALE: GESTIONE STRUMENTI ---
 st.sidebar.header("📁 Gestione Watchlist")
 
 with st.sidebar.expander("➕ Aggiungi Strumento"):
     with st.form("add_form_full"):
-        new_ticker = st.text_input("Ticker Yahoo (es. EQQQ.PA)").strip().upper()
-        new_name = st.text_input("Nome descrittivo").strip()
+        input_isin = st.text_input("Inserisci ISIN (es. IE00BK5BQT36)").strip().upper()
+        manual_ticker = st.text_input("Ticker Yahoo opzionale (se vuoto usa ISIN)").strip().upper()
         new_category = st.selectbox("Categoria", ["Azionario Globale", "Azionario Settoriale/Tematico", "Obbligazionario", "Monetario / Liquidità", "Commodities"])
-        new_isin = st.text_input("ISIN").strip().upper()
         new_ter = st.number_input("TER (%)", min_value=0.0, max_value=5.0, value=0.20, step=0.01)
         new_start = st.text_input("Data Inizio (YYYY-MM-DD)", value="2020-01-01").strip()
         
         submitted = st.form_submit_button("Aggiungi alla lista")
-        if submitted and new_ticker and new_name:
-            exists = any(item['ticker'] == new_ticker for item in st.session_state.user_watchlist)
+        if submitted and input_isin:
+            ticker_to_use = manual_ticker if manual_ticker else None
+            name_to_use = None
+            
+            # Se non viene inserito il ticker manuale, cerchiamo con l'ISIN
+            if not ticker_to_use:
+                found_sym, found_name = find_ticker_by_isin(input_isin)
+                if found_sym:
+                    ticker_to_use = found_sym
+                    name_to_use = found_name
+                else:
+                    ticker_to_use = input_isin # Fallback se l'API non risponde
+                    name_to_use = f"ETF {input_isin}"
+            
+            if not name_to_use:
+                name_to_use = ticker_to_use
+
+            exists = any(item['ticker'] == ticker_to_use for item in st.session_state.user_watchlist)
             if not exists:
                 st.session_state.user_watchlist.append({
-                    "ticker": new_ticker,
-                    "name": new_name,
+                    "ticker": ticker_to_use,
+                    "name": name_to_use,
                     "category": new_category,
-                    "isin": new_isin if new_isin else "N/D",
+                    "isin": input_isin,
                     "ter": new_ter,
                     "start_date": new_start
                 })
-                st.sidebar.success(f"Aggiunto {new_ticker}!")
+                st.sidebar.success(f"Aggiunto {name_to_use} ({ticker_to_use})!")
                 st.rerun()
             else:
-                st.sidebar.warning("Ticker già presente nella lista.")
+                st.sidebar.warning("Strumento già presente nella lista.")
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("Strumenti attivi nella sessione:")
@@ -74,7 +105,6 @@ def download_data(tickers, start_date):
         st.error(f"Errore nel download dei dati: {e}")
         return pd.DataFrame()
 
-# Estraiamo i ticker correnti dalla sessione dell'utente
 tickers_list = [item['ticker'] for item in st.session_state.user_watchlist]
 earliest_date = min([item['start_date'] for item in st.session_state.user_watchlist]) if st.session_state.user_watchlist else "2020-01-01"
 
@@ -211,7 +241,7 @@ else:
     with tab4:
         st.subheader("ℹ️ Informazioni sulla Modalità di Utilizzo")
         st.markdown("""
+        * **Ricerca Automatica da ISIN:** Inserendo l'ISIN, l'app interroga Yahoo Finance per ricavare in automatico il ticker e il nome dello strumento.
         * **Sessione Isolata:** Questa versione dell'applicazione gestisce la tua watchlist in memoria temporanea.
         * **Nessun Dato Persistente Condiviso:** Le modifiche che fai tu non impattano gli altri utenti che aprono il link.
-        * **Dati in Tempo Reale:** I prezzi e le serie storiche sono scaricati direttamente tramite le API finanziarie di Yahoo Finance.
         """)
