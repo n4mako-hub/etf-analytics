@@ -71,7 +71,7 @@ def download_data(tickers, start_date):
             df.columns = [tickers[0]]
         return df.dropna(how="all")
     except Exception as e:
-        st.error(fErrorre nel download dei dati: {e}")
+        st.error(Errorre nel download dei dati: {e}")
         return pd.DataFrame()
 
 # Estraiamo i ticker correnti dalla sessione dell'utente
