@@ -71,7 +71,7 @@ def download_data(tickers, start_date):
             df.columns = [tickers[0]]
         return df.dropna(how="all")
     except Exception as e:
-        st.error(Errorre nel download dei dati: {e}")
+        st.error(f"Errore nel download dei dati: {e}")
         return pd.DataFrame()
 
 # Estraiamo i ticker correnti dalla sessione dell'utente
@@ -87,18 +87,15 @@ st.markdown("Dashboard avanzata per l'analisi dei portafogli ETF. *Sessione uten
 if data.empty or not tickers_list:
     st.warning("Nessun dato disponibile o watchlist vuota. Aggiungi almeno uno strumento dalla barra laterale.")
 else:
-    # Tab di navigazione
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Performance e Grafici", "📉 Analisi Cicli & Drawdown", "🎯 Opportunità di Pullback", "ℹ️ Guida e Metriche"])
     
     with tab1:
         st.subheader("Rendimenti e Performance Storiche")
         
-        # Filtro orizzontale per il grafico
         col_f1, col_f2 = st.columns([2, 6])
         with col_f1:
             time_horizon = st.radio("Orizzonte temporale grafico:", ["1 Anno", "3 Anni", "5 Anni", "Tutto"], horizontal=True)
         
-        # Calcolo date per il grafico
         end_date_val = datetime.date.today()
         if time_horizon == "1 Anno":
             start_date_val = end_date_val - datetime.timedelta(days=365)
@@ -112,7 +109,6 @@ else:
         plot_data = data[data.index >= pd.to_datetime(start_date_val)]
         
         if not plot_data.empty:
-            # Normalizzazione a 100 per il confronto grafico
             norm_data = plot_data.div(plot_data.iloc[0]) * 100
             
             fig = go.Figure()
@@ -131,7 +127,6 @@ else:
             )
             st.plotly_chart(fig, use_container_width=True)
             
-        # Tabella riepilogativa metriche
         summary_rows = []
         for item in st.session_state.user_watchlist:
             t = item['ticker']
@@ -140,7 +135,6 @@ else:
                 if not series.empty:
                     ultimo_prezzo = series.iloc[-1]
                     
-                    # Rendimenti percentuali stimati
                     def get_perf(days):
                         target_date = series.index[-1] - datetime.timedelta(days=days)
                         filtered = series[series.index >= target_date]
