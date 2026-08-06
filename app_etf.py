@@ -111,7 +111,7 @@ earliest_date = min([item['start_date'] for item in st.session_state.user_watchl
 data = download_data(tickers_list, earliest_date)
 
 # --- 4. CORPO PRINCIPALE DELL'APP ---
-st.title("📈 ETF Performance Analytics")
+st.title("ETF Performance Analytics")
 st.markdown("Dashboard avanzata per l'analisi dei portafogli ETF. *Sessione utente isolata.*")
 
 if data.empty or not tickers_list:
