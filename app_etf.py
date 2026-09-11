@@ -43,8 +43,15 @@ if not st.session_state.get("authentication_status"):
 
     with tab_register:
         try:
-            # Parametro corretto: pre_authorized=False
-            email_reg, username_reg, name_reg = authenticator.register_user(pre_authorized=False)
+            # Legge la lista dal config oppure usa una lista vuota se non presente
+            pre_authorized_emails = config.get('pre-authorized', {}).get('emails', [])
+            email_reg, username_reg, name_reg = authenticator.register_user(pre_authorized=pre_authorized_emails)
+            if email_reg:
+                with open(CONFIG_FILE, 'w', encoding='utf-8') as file:
+                    yaml.dump(config, file, default_flow_style=False)
+                st.success("Utente registrato con successo! Ora puoi andare nella scheda 'Accedi' per entrare.")
+        except Exception as e:
+            st.error(f"Errore durante la registrazione: {e}")
             if email_reg:
                 with open(CONFIG_FILE, 'w', encoding='utf-8') as file:
                     yaml.dump(config, file, default_flow_style=False)
