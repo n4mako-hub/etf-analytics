@@ -1,0 +1,16 @@
+credentials:
+  usernames:
+    utente1:
+      email: utente1@email.com
+      name: "Utente Uno"
+      password: "password123"
+    utente2:
+      email: utente2@email.com
+      name: "Utente Due"
+      password: "password123"
+cookie:
+  expiry_days: 30
+  key: "chiave_segreta_random_etf_tracker"
+  name: "etf_tracker_cookie"
+pre-authorized:
+  emails: []
