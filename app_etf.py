@@ -43,15 +43,20 @@ if not st.session_state.get("authentication_status"):
 
     with tab_register:
         try:
-            # Legge la lista dal config oppure usa una lista vuota se non presente
+            # Recupera la lista di email pre-autorizzate dalla configurazione (o lista vuota)
             pre_authorized_emails = config.get('pre-authorized', {}).get('emails', [])
-            email_reg, username_reg, name_reg = authenticator.register_user(pre_authorized=pre_authorized_emails)
-            if email_reg:
-                with open(CONFIG_FILE, 'w', encoding='utf-8') as file:
-                    yaml.dump(config, file, default_flow_style=False)
-                st.success("Utente registrato con successo! Ora puoi andare nella scheda 'Accedi' per entrare.")
-        except Exception as e:
-            st.error(f"Errore durante la registrazione: {e}")
+            
+            # Esegue la registrazione
+            res = authenticator.register_user(pre_authorized=pre_authorized_emails)
+            
+            # Gestione sicura del valore di ritorno per evitare NameError
+            email_reg = None
+            if res:
+                if isinstance(res, tuple):
+                    email_reg = res[0]
+                elif isinstance(res, dict):
+                    email_reg = res.get('email')
+
             if email_reg:
                 with open(CONFIG_FILE, 'w', encoding='utf-8') as file:
                     yaml.dump(config, file, default_flow_style=False)
@@ -1085,7 +1090,7 @@ def render_dashboard(df_metrics, df_prices, df_ohlc, key_prefix, section_label):
         "Analisi Cicli & Drawdown", 
         "Opportunità di Pullback",
         "Correlazione & Backtest",
-        "Guida e Metriche",
+        "Guida e Metrike",
         "Assistente AI (Gemini)"
     ])
 
