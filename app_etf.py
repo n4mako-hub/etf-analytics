@@ -43,6 +43,31 @@ if not st.session_state.get("authentication_status"):
 
     with tab_register:
         try:
+            # Parametro corretto: pre_authorized=False
+            email_reg, username_reg, name_reg = authenticator.register_user(pre_authorized=False)
+            if email_reg:
+                with open(CONFIG_FILE, 'w', encoding='utf-8') as file:
+                    yaml.dump(config, file, default_flow_style=False)
+                st.success("Utente registrato con successo! Ora puoi andare nella scheda 'Accedi' per entrare.")
+        except Exception as e:
+            st.error(f"Errore durante la registrazione: {e}")
+
+if st.session_state.get("authentication_status") is False:
+    st.error("Username o password non corretti.")
+    st.stop()
+elif st.session_state.get("authentication_status") is None:
+    st.info("Inserisci le tue credenziali per accedere oppure crea un nuovo account nella scheda 'Registrati'.")
+    st.stop()
+
+# Interfaccia a schede per dividere Accesso e Nuova Registrazione
+if not st.session_state.get("authentication_status"):
+    tab_login, tab_register = st.tabs(["Accedi", "Registrati"])
+    
+    with tab_login:
+        authenticator.login()
+
+    with tab_register:
+        try:
             # Registrazione di un nuovo utente (salva direttamente in config.yaml)
             email_reg, username_reg, name_reg = authenticator.register_user(pre_authorization=False)
             if email_reg:
