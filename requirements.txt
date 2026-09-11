@@ -4,3 +4,5 @@ pandas
 requests
 plotly
 streamlit-autorefresh
+streamlit-authenticator
+pyyaml
