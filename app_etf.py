@@ -43,13 +43,15 @@ if not st.session_state.get("authentication_status"):
 
     with tab_register:
         try:
-            # Recupera la lista di email pre-autorizzate dalla configurazione (o lista vuota)
-            pre_authorized_emails = config.get('pre-authorized', {}).get('emails', [])
+            # Se ci sono email definite in config.yaml usa quelle, altrimenti consente la registrazione a tutti
+            pre_authorized_emails = config.get('pre-authorized', {}).get('emails', None)
             
-            # Esegue la registrazione
-            res = authenticator.register_user(pre_authorized=pre_authorized_emails)
-            
-            # Gestione sicura del valore di ritorno per evitare NameError
+            if pre_authorized_emails:
+                res = authenticator.register_user(pre_authorized=pre_authorized_emails)
+            else:
+                res = authenticator.register_user()
+
+            # Gestione del risultato di ritorno
             email_reg = None
             if res:
                 if isinstance(res, tuple):
@@ -1090,7 +1092,7 @@ def render_dashboard(df_metrics, df_prices, df_ohlc, key_prefix, section_label):
         "Analisi Cicli & Drawdown", 
         "Opportunità di Pullback",
         "Correlazione & Backtest",
-        "Guida e Metrike",
+        "Guida e Metriche",
         "Assistente AI (Gemini)"
     ])
 
